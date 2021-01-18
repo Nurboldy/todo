@@ -12,9 +12,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var doCmd = &cobra.Command{
-	Use:   "do",
-	Short: "Marks task a complete",
+var undoCmd = &cobra.Command{
+	Use:   "undo",
+	Short: "Unmark task a complete",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var ids []int
 		for _, arg := range args {
@@ -25,7 +25,6 @@ var doCmd = &cobra.Command{
 				ids = append(ids, id)
 			}
 		}
-		// create temp file
 		w, err := os.Create(path.GetPath() + "_")
 		if err != nil {
 			return err
@@ -38,6 +37,7 @@ var doCmd = &cobra.Command{
 		}
 		defer f.Close()
 		br := bufio.NewReader(f)
+
 		for n := 1; ; n++ {
 			b, _, err := br.ReadLine()
 			if err != nil {
@@ -53,12 +53,12 @@ var doCmd = &cobra.Command{
 				}
 			}
 			line := strings.TrimSpace(string(b))
-			if match && !strings.HasPrefix(line, "-") {
-				_, err = fmt.Fprintf(w, "-%s\n", line)
+			if match && strings.HasPrefix(line, "-") {
+				_, err = fmt.Fprintf(w, "%s\n", line[1:])
 				if err != nil {
 					return err
 				}
-				fmt.Printf("Task done: %s\n", line)
+				fmt.Printf("Task undone: %s\n", line[1:])
 			} else {
 				_, err = fmt.Fprintf(w, "%s\n", line)
 				if err != nil {
@@ -66,16 +66,17 @@ var doCmd = &cobra.Command{
 				}
 			}
 		}
-		f.Close()
 		w.Close()
+		f.Close()
 		err = os.Remove(path.GetPath())
 		if err != nil {
 			return err
 		}
 		return os.Rename(path.GetPath()+"_", path.GetPath())
+
 	},
 }
 
 func init() {
-	RootCmd.AddCommand(doCmd)
+	RootCmd.AddCommand(undoCmd)
 }

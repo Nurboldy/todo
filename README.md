@@ -1,1 +1,1 @@
-todo cli
+Simple command line todo list

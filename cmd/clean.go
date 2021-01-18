@@ -5,40 +5,28 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/Nurboldy/todo/path"
 	"github.com/spf13/cobra"
 )
 
-var doCmd = &cobra.Command{
-	Use:   "do",
-	Short: "Marks task a complete",
+var cleanCmd = &cobra.Command{
+	Use:   "clean",
+	Short: "remove all done tasks",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		var ids []int
-		for _, arg := range args {
-			id, err := strconv.Atoi(arg)
-			if err != nil {
-				fmt.Println("Failed to parse the argument", arg)
-			} else {
-				ids = append(ids, id)
-			}
-		}
-		// create temp file
 		w, err := os.Create(path.GetPath() + "_")
 		if err != nil {
 			return err
 		}
 		defer w.Close()
-
 		f, err := os.Open(path.GetPath())
 		if err != nil {
-			return err
+			return nil
 		}
 		defer f.Close()
 		br := bufio.NewReader(f)
-		for n := 1; ; n++ {
+		for {
 			b, _, err := br.ReadLine()
 			if err != nil {
 				if err != io.EOF {
@@ -46,20 +34,8 @@ var doCmd = &cobra.Command{
 				}
 				break
 			}
-			match := false
-			for _, id := range ids {
-				if id == n {
-					match = true
-				}
-			}
-			line := strings.TrimSpace(string(b))
-			if match && !strings.HasPrefix(line, "-") {
-				_, err = fmt.Fprintf(w, "-%s\n", line)
-				if err != nil {
-					return err
-				}
-				fmt.Printf("Task done: %s\n", line)
-			} else {
+			line := string(b)
+			if !strings.HasPrefix(line, "-") {
 				_, err = fmt.Fprintf(w, "%s\n", line)
 				if err != nil {
 					return err
@@ -77,5 +53,5 @@ var doCmd = &cobra.Command{
 }
 
 func init() {
-	RootCmd.AddCommand(doCmd)
+	RootCmd.AddCommand(cleanCmd)
 }
